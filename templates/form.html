@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Generar Informe de Prácticas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .date-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        button,
+        input[type="submit"] {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        input,
+        textarea {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Generar Informe de Prácticas</h1>
+    <form method="POST" action="{{ url_for('generate_document') }}">
+        <label for="nombre">Nombre:</label>
+        <input type="text" name="nombre" id="nombre" required><br><br>
+
+        <div class="date-container">
+            <div>
+                <label>Tipo de fecha:</label>
+                <select id="tipoFecha" onchange="toggleFechaManual()">
+                    <option value="auto">Fecha automática (hoy)</option>
+                    <option value="manual">Fecha manual</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="fechaAutoDiv">
+            <p>Se usará la fecha actual formateada como: La Joya, <span id="fechaFormateadaAuto"></span></p>
+            <input type="hidden" name="fecha" id="fechaAutoInput">
+        </div>
+
+        <div id="fechaManualDiv" class="hidden">
+            <label for="fechaManualSelector">Seleccionar fecha:</label>
+            <input type="date" id="fechaManualSelector" onchange="actualizarFechaManual()"><br><br>
+
+            <label for="fechaManualInput">Fecha formateada:</label>
+            <input type="text" name="fecha" id="fechaManualInput" placeholder="La Joya, DD de Mes de YYYY">
+        </div>
+
+        <br>
+        <label for="instrucciones">Instrucciones para el informe:</label><br>
+        <textarea name="instrucciones" id="instrucciones" rows="4" cols="50"
+            placeholder="Escribe aquí detalles o indicaciones para el informe"></textarea><br><br>
+
+        <button type="submit">Generar Informe</button>
+    </form>
+
+    <script>
+        // Meses en español
+        const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+        // Función para formatear la fecha en español
+        function formatearFecha(fecha) {
+            const dia = fecha.getDate();
+            const mes = meses[fecha.getMonth()];
+            const anio = fecha.getFullYear();
+            return `La Joya, ${dia} de ${mes} de ${anio}`;
+        }
+
+        // Obtener la fecha actual formateada
+        function actualizarFechaAuto() {
+            const hoy = new Date();
+            const fechaFormateada = formatearFecha(hoy);
+            document.getElementById('fechaFormateadaAuto').textContent = fechaFormateada;
+            document.getElementById('fechaAutoInput').value = fechaFormateada;
+        }
+
+        // Actualizar la fecha manual cuando se selecciona
+        function actualizarFechaManual() {
+            const fechaSeleccionada = new Date(document.getElementById('fechaManualSelector').value);
+            if (!isNaN(fechaSeleccionada)) {
+                const fechaFormateada = formatearFecha(fechaSeleccionada);
+                document.getElementById('fechaManualInput').value = fechaFormateada;
+            }
+        }
+
+        // Alternar entre fecha automática y manual
+        function toggleFechaManual() {
+            const tipoFecha = document.getElementById('tipoFecha').value;
+
+            if (tipoFecha === 'auto') {
+                document.getElementById('fechaAutoDiv').classList.remove('hidden');
+                document.getElementById('fechaManualDiv').classList.add('hidden');
+                document.getElementById('fechaManualInput').name = '';
+                document.getElementById('fechaAutoInput').name = 'fecha';
+            } else {
+                document.getElementById('fechaAutoDiv').classList.add('hidden');
+                document.getElementById('fechaManualDiv').classList.remove('hidden');
+                document.getElementById('fechaManualInput').name = 'fecha';
+                document.getElementById('fechaAutoInput').name = '';
+            }
+        }
+
+        // Inicializar el formulario al cargar
+        window.onload = function () {
+            // Configurar la fecha actual en el formulario
+            actualizarFechaAuto();
+
+            // Configurar el selector de fecha manual con la fecha de hoy
+            const hoy = new Date();
+            const yyyyMMdd = hoy.toISOString().split('T')[0];
+            document.getElementById('fechaManualSelector').value = yyyyMMdd;
+
+            // Inicializar la fecha manual formateada
+            actualizarFechaManual();
+        };
+    </script>
+</body>
+
+</html>

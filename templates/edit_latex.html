@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <title>Editar Documento LaTeX</title>
+</head>
+
+<body>
+    <h1>Editar Documento en LaTeX</h1>
+    <form method="POST" action="{{ url_for('generate_document') }}">
+        <label for="names">Nombres a reemplazar:</label><br>
+        <input type="text" id="names" name="names" required><br><br>
+
+        <label for="body">Cuerpo (instrucciones o contenido adicional):</label><br>
+        <textarea id="body" name="body" rows="10" cols="80" required></textarea><br><br>
+
+        <label for="latex_text">Documento LaTeX:</label><br>
+        <textarea id="latex_text" name="latex_text" rows="15" cols="80" required>{{ latex_text }}</textarea><br><br>
+
+        <button type="submit">Generar Vista Previa del Documento LaTeX</button>
+    </form>
+</body>
+
+</html>

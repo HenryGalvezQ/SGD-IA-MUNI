@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, send_file, redirect, url_for
+from flask import Flask, render_template, request, send_file, url_for
 import jinja2
 import pdfkit
 import os
@@ -84,6 +84,7 @@ def crea_pdf_y_word(ruta_template, info, rutacss=''):
             pass
     
     return ruta_pdf_salida, ruta_word_salida
+
 # Eliminar la primera línea si es '```html' y la última línea si es '```'
 def limpiar_respuesta(respuesta):
     # Eliminar ```html al principio y ``` al final usando regex
@@ -112,7 +113,7 @@ def generate_document():
     atencion = request.form.get("atencion")               # Trabajador para Atención:
     subgerencia_atencion = request.form.get("subgerencia_atencion")  # Área seleccionada para Atención:
 
-    if not (nombre and fecha and nombre and a and oficina_a and atencion and subgerencia_atencion):
+    if not (nombre and fecha and a and oficina_a and atencion and subgerencia_atencion):
         return "Faltan datos", 400
 
     # Extraer el mes de la fecha formateada usando regex (se asume que la fecha viene en el formato "La Joya, DD de Mes de YYYY")
@@ -200,7 +201,6 @@ def generate_document():
         return f"Error al generar el cuerpo del informe: {str(e)}", 500
 
     # Armar el diccionario de información para el template
-    # Se asume que el template HTML tiene placeholders: {{nombre}}, {{fecha}} y {{cuerpo}}
     info = {
         "nombre": nombre,
         "a": a,
@@ -222,10 +222,14 @@ def generate_document():
         pdf_filename = os.path.basename(ruta_pdf)
         word_filename = os.path.basename(ruta_word)
         
-        # Mostrar una página de descarga con los nombres de archivo
-        return render_template("download.html", 
-                              pdf_filename=pdf_filename, 
-                              word_filename=word_filename)
+        # Re-renderizar form.html con la vista previa y enlaces de descarga
+        return render_template(
+            "form.html",
+            estructura=load_estructura(),
+            preview_pdf=pdf_filename,
+            pdf_download_url=url_for('download', tipo='pdf', filename=pdf_filename),
+            word_download_url=url_for('download', tipo='word', filename=word_filename)
+        )
     except Exception as e:
         return f"Error al crear PDF/Word: {str(e)}", 500
 
@@ -236,10 +240,13 @@ def download(tipo, filename):
     
     if not os.path.exists(filepath):
         return "Archivo no encontrado", 404
-        
+    
+    # Si se solicita preview, se muestra inline
+    if request.args.get('preview'):
+        return send_file(filepath, as_attachment=False)
     return send_file(filepath, as_attachment=True)
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True)
     #app.run(debug=True)
-    

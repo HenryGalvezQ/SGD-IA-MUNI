@@ -1,0 +1,21 @@
+{
+    "Gerencias": {
+        "Gerencia de Administración y Finanzas": {
+            "Subgerencias": {
+                "Subgerencia de Logística, Servicios Generales y Almacén": [],
+                "Subgerencia de Recursos Humanos": [
+                    "Abg. Saiby Nieves Ramos"
+                ],
+                "Subgerencia de Tesorería": [],
+                "Subgerencia de Contabilidad": [],
+                "Oficina de Informática y Estadisticas": [
+                    "Sr. Jean C. Martinez Retamozo"
+                ],
+                "Oficina de Control Patrimonial": []
+            }
+        },
+        "Gerencia de Asesoría Juridica": {},
+        "Gerencia de Planificacion": {},
+        "Gerencia de Administracion Tributaria": {}
+    }
+}

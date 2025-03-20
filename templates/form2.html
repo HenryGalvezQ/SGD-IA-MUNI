@@ -46,108 +46,75 @@
             padding: 10px;
             border: 1px solid #ccc;
         }
-
-        /* Contenedor para disposición horizontal de bloques */
-        .horizontal-container {
-            display: flex;
-            gap: 20px;
-            justify-content: space-between;
-            flex-wrap: wrap;
-        }
-
-        .horizontal-container .section {
-            flex: 1;
-            min-width: 300px;
-        }
-
-        /* Estilos para los botones de descarga */
-        .download-buttons {
-            margin-top: 20px;
-            text-align: center;
-        }
-
-        .download-button {
-            display: inline-block;
-            padding: 10px 20px;
-            margin: 5px;
-            background-color: #2196F3;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-        }
-
-        .download-button.word {
-            background-color: #FF9800;
-        }
     </style>
 </head>
 
 <body>
     <h1>Generar Informe de Prácticas</h1>
+
     <h2>Datos de la Cabecera</h2>
     <form method="POST" action="{{ url_for('generate_document') }}">
         <!-- Campo DE: -->
         <label for="nombre">DE:</label>
         <input type="text" id="nombre" name="nombre" placeholder="Nombre de quien emite el informe" required>
 
-        <!-- Contenedor horizontal para los bloques "A:" y "ATENCIÓN:" -->
-        <div class="horizontal-container">
-            <!-- Bloque para "A:" -->
-            <div class="section">
-                <h3>Datos para "A:"</h3>
-                <label>Seleccione la Gerencia para A:</label>
-                <select id="gerencia_a" required>
-                    <option value="">Seleccione una gerencia</option>
-                    {% for gerencia in estructura.Gerencias.keys() %}
-                    <option value="{{ gerencia }}">{{ gerencia }}</option>
-                    {% endfor %}
-                </select>
+        <!-- Bloque para "A:" -->
+        <div class="section">
+            <h3>Datos para "A:"</h3>
+            <label>Seleccione la Gerencia para A:</label>
+            <select id="gerencia_a" required>
+                <option value="">Seleccione una gerencia</option>
+                {% for gerencia in estructura.Gerencias.keys() %}
+                <option value="{{ gerencia }}">{{ gerencia }}</option>
+                {% endfor %}
+            </select>
 
-                <label>Seleccione el Área (Oficina) para A:</label>
-                <select id="area_a" required>
-                    <option value="">Seleccione un área</option>
-                </select>
+            <label>Seleccione el Área (Oficina) para A:</label>
+            <select id="area_a" required>
+                <option value="">Seleccione un área</option>
+            </select>
 
-                <label>Seleccione el Trabajador para A:</label>
-                <select id="trabajador_a" required>
-                    <option value="">Seleccione un trabajador</option>
-                </select>
+            <label>Seleccione el Trabajador para A:</label>
+            <select id="trabajador_a" required>
+                <option value="">Seleccione un trabajador</option>
+            </select>
 
-                <!-- Campos ocultos para enviar los valores seleccionados -->
-                <input type="hidden" id="oficina_a" name="oficina_a">
-                <input type="hidden" id="a" name="a">
-            </div>
+            <!-- Campos ocultos para enviar los valores seleccionados -->
+            <input type="hidden" id="oficina_a" name="oficina_a">
+            <input type="hidden" id="a" name="a">
+        </div>
 
-            <!-- Bloque para "ATENCIÓN:" -->
-            <div class="section">
-                <h3>Datos para "ATENCIÓN:"</h3>
-                <label>Seleccione la Gerencia para ATENCIÓN:</label>
-                <select id="gerencia_atencion" required>
-                    <option value="">Seleccione una gerencia</option>
-                    {% for gerencia in estructura.Gerencias.keys() %}
-                    <option value="{{ gerencia }}">{{ gerencia }}</option>
-                    {% endfor %}
-                </select>
+        <!-- Bloque para "ATENCIÓN:" -->
+        <div class="section">
+            <h3>Datos para "ATENCIÓN:"</h3>
+            <label>Seleccione la Gerencia para ATENCIÓN:</label>
+            <select id="gerencia_atencion" required>
+                <option value="">Seleccione una gerencia</option>
+                {% for gerencia in estructura.Gerencias.keys() %}
+                <option value="{{ gerencia }}">{{ gerencia }}</option>
+                {% endfor %}
+            </select>
 
-                <label>Seleccione el Área (Subgerencia) para ATENCIÓN:</label>
-                <select id="area_atencion" required>
-                    <option value="">Seleccione un área</option>
-                </select>
+            <label>Seleccione el Área (Subgerencia) para ATENCIÓN:</label>
+            <select id="area_atencion" required>
+                <option value="">Seleccione un área</option>
+            </select>
 
-                <label>Seleccione el Trabajador para ATENCIÓN:</label>
-                <select id="trabajador_atencion" required>
-                    <option value="">Seleccione un trabajador</option>
-                </select>
+            <label>Seleccione el Trabajador para ATENCIÓN:</label>
+            <select id="trabajador_atencion" required>
+                <option value="">Seleccione un trabajador</option>
+            </select>
 
-                <!-- Campos ocultos para enviar los valores seleccionados -->
-                <input type="hidden" id="subgerencia_atencion" name="subgerencia_atencion">
-                <input type="hidden" id="atencion" name="atencion">
-            </div>
+            <!-- Campos ocultos para enviar los valores seleccionados -->
+            <input type="hidden" id="subgerencia_atencion" name="subgerencia_atencion">
+            <input type="hidden" id="atencion" name="atencion">
         </div>
 
         <!-- Campo para el nombre (para el informe) -->
+        <!-- Campo para el nombre (para el informe) -->
         <label for="asunto">Nombre (para el informe):</label>
         <input type="text" name="asunto" id="asunto" value="INFORME DE PRÁCTICAS DEL MES" readonly required>
+
 
         <!-- Campos de fecha (opción automática o manual) -->
         <div class="section">
@@ -179,24 +146,9 @@
         <button type="submit">Generar Informe</button>
     </form>
 
-    <!-- Vista previa y botones de descarga, se muestran solo si se generó el documento -->
-    {% if preview_pdf %}
-    <hr>
-    <div id="preview">
-        <h2>Vista Previa del Informe</h2>
-        <!-- Incrustamos el PDF generado en un iframe -->
-        <iframe src="{{ url_for('download', tipo='pdf', filename=preview_pdf) }}?preview=1" width="100%" height="500px"
-            style="border: 1px solid #ccc;"></iframe>
-        <div class="download-buttons">
-            <a href="{{ pdf_download_url }}" class="download-button">Descargar PDF</a>
-            <a href="{{ word_download_url }}" class="download-button word">Descargar Word</a>
-        </div>
-    </div>
-    {% endif %}
-
     <script>
         // La estructura se pasa desde el backend
-        var estructura = {{ estructura | tojson }};
+        var estructura = {{ estructura| tojson }};
 
         // BLOQUE "A:"
         var gerenciaA = document.getElementById('gerencia_a');
@@ -234,11 +186,13 @@
                     trabajadorA.appendChild(option);
                 });
             }
+            // Asignar el área seleccionada al campo oculto para "oficina_a"
             campoOficinaA.value = area;
         });
 
         trabajadorA.addEventListener('change', function () {
-            campoA.value = trabajadorA.value;
+            var trabajador = trabajadorA.value;
+            campoA.value = trabajador;
         });
 
         // BLOQUE "ATENCIÓN:"
@@ -277,11 +231,13 @@
                     trabajadorAtencion.appendChild(option);
                 });
             }
+            // Asignar el área seleccionada al campo oculto para "subgerencia_atencion"
             campoSubgerenciaAtencion.value = area;
         });
 
         trabajadorAtencion.addEventListener('change', function () {
-            campoAtencion.value = trabajadorAtencion.value;
+            var trabajador = trabajadorAtencion.value;
+            campoAtencion.value = trabajador;
         });
 
         // Funciones para el manejo de fechas

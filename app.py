@@ -103,6 +103,7 @@ def generate_document():
     # Recoger datos de la cabecera y del formulario
     nombre = request.form.get("nombre")
     fecha = request.form.get("fecha")
+    asunto = request.form.get("asunto")
     instrucciones_usuario = request.form.get("instrucciones")
     
     # Campos del bloque para "A:"
@@ -119,77 +120,26 @@ def generate_document():
     # Extraer el mes de la fecha formateada usando regex (se asume que la fecha viene en el formato "La Joya, DD de Mes de YYYY")
     match = re.search(r'de\s+(\w+)\s+de', fecha)
     month = match.group(1).upper() if match else ""
-    asunto = f"INFORME DE PRÁCTICAS DEL MES {month}"
+    asunto = asunto + " " + month
 
-    # Generar el cuerpo del informe usando la IA (modelo gpt-4o-mini)
+    # Cargar ambos prompts desde los archivos en la carpeta "prompts"
+    with open("prompts/reglas_prompt.txt", "r", encoding="utf-8") as f:
+        reglas = f.read()
+    with open("prompts/formato_practicas_prompt.txt", "r", encoding="utf-8") as f:
+        formato = f.read()
+
+    # Combinar ambos prompts: las reglas se anteponen al formato
+    prompt = reglas + "\n" + formato
+
+        # Generar el cuerpo del informe usando la IA (modelo gpt-4o-mini)
     prompt = (
-        f"Genera el cuerpo del informe de prácticas para un estudiante llamado {nombre} con fecha {fecha}. con html "
-        f"{instrucciones_usuario if instrucciones_usuario else ''} "
-        f"""Redacta un informe formal y detallado que incluya actividades realizadas y logros obtenidos durante el mes. asi como este ejemplo:     <p>Mediante la presente me dirijo a usted para hacerle llegar mis cordiales saludos y a su vez informarle sobre la realizacioacute;n de las actividades como practicante de Ingenier&iacute;a de Sistemas en el &aacute;rea de
-        Inform&aacute;tica y Estad&iacute;stica correspondiente al mes de Febrero del presente a&ntilde;o.</p>
-    <p>Detalle de las actividades del mes:</p>
-    <ul>
-        <li>Apoyo en la instalaci&oacute;n de esc&aacute;ner (Anexo 1)</li>
-        <li>Apoyo en la instalaci&oacute;n de equipos (Anexo 2)</li>
-        <li>Apoyo en la instalaci&oacute;n y configuraci&oacute;n de impresora Canon(Anexo 3)</li>
-        <li>Apoyo en la configuraci&oacute;n de impresi&oacute;n (Anexo 4)</li>
-        <li>Apoyo en la instalaci&oacute;n y configuraci&oacute;n de impresora Epson (Anexo 5)</li>
-        <li>Apoyo en el mantenimiento de impresora (Anexo 6)</li>
-        <li>Apoyo en la canalizaci&oacute;n para el cableado de red ethernet y telefon&iacute;a (Anexo 7)</li>
-        <li>Apoyo en el mantenimiento de impresora Konica Minolta (Anexo 8)</li>
-        <li>Apoyo en la implementaci&oacute;n de Banner en el sistema web de la Municipalidad (Anexo 9)</li>
-        <li>Apoyo en la conexi&oacute;n en red de impresora (Anexo 10)</li>
-        <li>Apoyo en pruebas de uso de Deep Seek R1 en local (Anexo 11)</li>
-        <li>Apoyo en la instalaci&oacute;n y configuraci&oacute;n de switch (Anexo 12)</li>
-        <li>Apoyo en la detecci&oacute;n de intento de hackeo de la p&aacute;gina web de la Municipalidad (Anexo 13)
-        </li>
-        <li>Apoyo en la eliminaci&oacute;n de archivos maliciosos del sistema web de la Municipalidad (Anexo 14)</li>
-        <li>Apoyo en la instalaci&oacute;n y configuraci&oacute;n de impresora Brother (Anexo 15)</li>
-        <li>Apoyo en el mejoramiento de la seguridad del sistema web de la Municipalidad (Anexo 16)</li>
-        <li>Apoyo en el testeo de seguridad del sistema web de la Municipalidad (Anexo 17)</li>
-        <li>Apoyo en la instalaci&oacute;n de la central telef&oacute;nica (Anexo 18)</li>
-        <li>Apoyo en el mantenimiento de impresora Brother (Anexo 19)</li>
-        <li>Apoyo en la instalaci&oacute;n de scaner de impresora Brother (Anexo 20)</li>
-        <li>Apoyo en en el mantenimiento de impresora Epson (Anexo 21)</li>
-        <li>Apoyo en la implementaci&oacute;n de vistas de las resoluciones del a&ntilde;o 2025 en la p&aacute;gina web
-            de la Municipalidad (Anexo 22)</li>
-        <li>Apoyo en el mantenimiento de computadora (Anexo 23)</li>
-        <li>Apoyo en la implementaci&oacute;n de un CRUD para manejar el banner de la p&aacute;gina web de la
-            Municipalidad (Anexo 24)</li>
-        <li>Apoyo en la recuperaci&oacute;n de computadora con punto de restauraci&oacute;n (Anexo 25)</li>
-        <li>Apoyo en la detecci&oacute;n de intento de hackeo en la p&aacute;gina web de la Municipalidad (Anexo 26)
-        </li>
-        <li>Apoyo en la eliminaci&oacute;n de archivos maliciosos del sistema web de la Municipalidad (Anexo 27)</li>
-        <li>Apoyo en la implementaci&oacute;n de tiktok en el header en la p&aacute;gina web de la Municipalidad (Anexo
-            28)</li>
-        <li>Apoyo en la implementaci&oacute;n de tiktok en el footer en la p&aacute;gina web de la Municipalidad (Anexo
-            29)</li>
-        <li>Apoyo en la implementaci&oacute;n de un subdominio para el sistema web de la Municipalidad para el
-            reforzamiento de seguridad (Anexo 30)</li>
-        <li>Apoyo en la instalaci&oacute;n de impresora Canon (Anexo 31)</li>
-        <li>Apoyo en la reparaci&oacute;n de inicio de computadora (Anexo 32)</li>
-        <li>Apoyo en la limpieza de cola de impresi&oacute;n de equipo (Anexo 33)</li>
-        <li>Apoyo en la grabaci&oacute;n de archivos en disco DVD (Anexo 34)</li>
-        <li>Apoyo en la reconexi&oacute;n de impresora Brother en red (Anexo 35)</li>
-        <li>Apoyo en la reconexi&oacute;n de impresora Epson en red (Anexo 36)</li>
-        <li>Apoyo en la reconexi&oacute;n de internet (Anexo 37)</li>
-        <li>Apoyo en la subida de documentaci&oacute;n en el SCI (Anexo 38)</li>
-        <li>Apoyo en el acceso al soporte de control remoto del SCI (Anexo 39)</li>
-        <li>Apoyo en el acceso al sistema del SCI (Anexo 40)</li>
-        <li>Apoyo en la ejecuci&oacute;n del Sistema de Agua a trav&eacute;s de Docker en local (Anexo 41)</li>
-        <li>Apoyo en la reconexi&oacute;n de computadora con impresora en red (Anexo 42)</li>
-        <li>Apoyo en el restablecimiento de las credenciales en el SCI (Anexo 43)</li>
-        <li>Apoyo en la instalaci&oacute;n de computador y conexi&oacute;n con impresora Brother (Anexo 44)</li>
-        <li>Apoyo en el mantenimiento de impresora Konica Minolta (Anexo 45)</li>
-        <li>Apoyo en la instalaci&oacute;n de drivers de impresora Konica Minolta (Anexo 46)</li>
-        <li>Apoyo en el restablecimiento de credenciales de usuario de Windows a trav&eacute;s de cmd (Anexo 47)</li>
-        <li>Apoyo en la subida de documentaci&oacute;n al SCI (Anexo 48)</li>
-    </ul>
-    <p>&nbsp;&nbsp;Es todo en cuanto comunico para sus conocimientos y fines convenientes.</p>
-    <p>&nbsp;</p>
-    <p>&nbsp;</p>
-    al momento de responder tienes estrictamente prohibido hablar de cualquier cosa que no sea el informe de prácticas, tu respuesta es defrente eso significa que no quiero que me expliques que haras o al final que digas que ya terminaste ya que copiare tu respuesta tal cual y lo pegare en mi documento limitate solamente a responder, no generes un titulo ya que empezaré en el cuerpo defrente"""
+        reglas + "\n" +
+        f"Genera el cuerpo del informe de prácticas para un estudiante llamado {nombre} con fecha {fecha}. con html " +
+        (instrucciones_usuario if instrucciones_usuario else "") + "\n" +
+        formato
     )
+
+
     try:
         response = client.responses.create(
             model="gpt-4o-mini",

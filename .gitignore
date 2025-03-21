@@ -1,0 +1,6 @@
+# Ignorar archivos .env
+.env
+
+# Ignorar el contenido de la carpeta "salidas" pero no la carpeta en sí
+salidas/*
+!salidas/.gitkeep

@@ -159,7 +159,7 @@
                 </select>
             </div>
             <div id="fechaAutoDiv">
-                <p>Se usará la fecha actual formateada como: La Joya, <span id="fechaFormateadaAuto"></span></p>
+                <p>Se usará la fecha actual formateada como: <span id="fechaFormateadaAuto"></span></p>
                 <input type="hidden" name="fecha" id="fechaAutoInput">
             </div>
             <div id="fechaManualDiv" class="hidden">
@@ -299,12 +299,16 @@
             document.getElementById('fechaAutoInput').value = fechaFormateada;
         }
         function actualizarFechaManual() {
-            const fechaSeleccionada = new Date(document.getElementById('fechaManualSelector').value);
-            if (!isNaN(fechaSeleccionada)) {
+            const valorFecha = document.getElementById('fechaManualSelector').value;
+            if (valorFecha) {
+                const partes = valorFecha.split("-");
+                // Se crea la fecha en la zona horaria local: new Date(año, mes-1, día)
+                const fechaSeleccionada = new Date(partes[0], partes[1] - 1, partes[2]);
                 const fechaFormateada = formatearFecha(fechaSeleccionada);
                 document.getElementById('fechaManualInput').value = fechaFormateada;
             }
         }
+
         function toggleFechaManual() {
             const tipoFecha = document.getElementById('tipoFecha').value;
             if (tipoFecha === 'auto') {

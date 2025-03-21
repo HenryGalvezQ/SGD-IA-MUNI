@@ -1,0 +1,8 @@
+Flask==3.0.3
+Flask-Cors==4.0.1
+openai==1.68.0
+pdfkit==1.0.0
+python-dotenv==1.0.1
+Spire.Doc==13.1.0
+jinja2==3.0.1
+requests==2.32.3

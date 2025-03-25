@@ -27,64 +27,6 @@ def load_estructura():
     with open("estructura.json", "r", encoding="utf-8") as f:
         return json.load(f)
 
-# Función para crear el PDF y el Word siguiendo tu ejemplo
-def crea_pdf_y_word(ruta_template, info, rutacss=''):
-    # Cargar el template
-    nombre_template = ruta_template.split('/')[-1]
-    ruta_template_dir = ruta_template.replace(nombre_template, '')
-    env = jinja2.Environment(loader=jinja2.FileSystemLoader(ruta_template_dir))
-    template = env.get_template(nombre_template)
-
-    # Renderizar el HTML con la información proporcionada
-    html = template.render(info)
-
-    # Opciones para generar el PDF
-    options = {
-        'page-size': 'A4',
-        'margin-top': '1in',
-        'margin-right': '1in',
-        'margin-bottom': '1in',
-        'margin-left': '1in',
-        'encoding': 'UTF-8'
-    }
-
-    # Crear rutas de salida con timestamp para evitar conflictos
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    ruta_pdf_salida = f'salidas/salida_{timestamp}.pdf'
-    ruta_word_salida = f'salidas/salida_{timestamp}.docx'
-
-    # Configuración de PDF con wkhtmltopdf
-    config = pdfkit.configuration(wkhtmltopdf='C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe')
-    pdfkit.from_string(html, ruta_pdf_salida, options=options, configuration=config)
-
-    # Crear archivo temporal HTML para generar el DOCX
-    temp_html_path = f'salidas/temp_{timestamp}.html'
-    with open(temp_html_path, 'w', encoding='utf-8') as f:
-        f.write(html)
-
-    try:
-        # Crear el archivo de Word usando Spire.Doc
-        document = Document()
-        
-        # Cargar desde el archivo HTML temporal
-        document.LoadFromFile(temp_html_path, FileFormat.Html)
-        
-        # Guardar como DOCX
-        document.SaveToFile(ruta_word_salida, FileFormat.Docx2016)
-        
-        # Cerrar el documento y liberar recursos
-        document.Close()
-        document.Dispose()
-    finally:
-        # Limpiar archivos temporales
-        try:
-            if os.path.exists(temp_html_path):
-                os.remove(temp_html_path)
-        except:
-            pass
-    
-    return ruta_pdf_salida, ruta_word_salida
-
 # Eliminar la primera línea si es '```html' y la última línea si es '```'
 def limpiar_respuesta(respuesta):
     # Eliminar ```html al principio y ``` al final usando regex
@@ -95,8 +37,7 @@ def limpiar_respuesta(respuesta):
 @app.route("/", methods=["GET"])
 def index():
     # Mostrar el formulario para ingresar nombre, fecha e instrucciones para el informe
-    estructura = load_estructura()
-    return render_template("form.html", estructura=estructura)
+    return render_template("form.html", estructura=load_estructura())
 
 @app.route("/generate", methods=["POST"])
 def generate_document():
@@ -106,39 +47,30 @@ def generate_document():
     asunto = request.form.get("asunto")
     instrucciones_usuario = request.form.get("instrucciones")
     
-    # Campos del bloque para "A:"
-    a = request.form.get("a")               # Trabajador para A:
-    oficina_a = request.form.get("oficina_a")  # Oficina seleccionada para A:
-
-    # Campos del bloque para "ATENCIÓN:"
-    atencion = request.form.get("atencion")               # Trabajador para Atención:
-    subgerencia_atencion = request.form.get("subgerencia_atencion")  # Área seleccionada para Atención:
+    # Campos para "A:" y "ATENCIÓN:"
+    a = request.form.get("a")
+    oficina_a = request.form.get("oficina_a")
+    atencion = request.form.get("atencion")
+    subgerencia_atencion = request.form.get("subgerencia_atencion")
 
     if not (nombre and fecha and a and oficina_a and atencion and subgerencia_atencion):
         return "Faltan datos", 400
 
-    # Extraer el mes de la fecha formateada usando regex (se asume que la fecha viene en el formato "La Joya, DD de Mes de YYYY")
     match = re.search(r'de\s+(\w+)\s+de', fecha)
     month = match.group(1).upper() if match else ""
     asunto = asunto + " " + month
 
-    # Cargar ambos prompts desde los archivos en la carpeta "prompts"
     with open("prompts/reglas_prompt.txt", "r", encoding="utf-8") as f:
         reglas = f.read()
     with open("prompts/formato_practicas_prompt.txt", "r", encoding="utf-8") as f:
         formato = f.read()
 
-    # Combinar ambos prompts: las reglas se anteponen al formato
-    prompt = reglas + "\n" + formato
-
-        # Generar el cuerpo del informe usando la IA (modelo gpt-4o-mini)
     prompt = (
         reglas + "\n" +
-        f"Genera el cuerpo del informe de prácticas para un estudiante llamado {nombre} con fecha {fecha}. con html " +
+        f"Genera el cuerpo del informe de prácticas para un estudiante llamado {nombre} con fecha {fecha} con html " +
         (instrucciones_usuario if instrucciones_usuario else "") + "\n" +
         formato
     )
-
 
     try:
         response = client.responses.create(
@@ -150,7 +82,6 @@ def generate_document():
     except Exception as e:
         return f"Error al generar el cuerpo del informe: {str(e)}", 500
 
-    # Armar el diccionario de información para el template
     info = {
         "nombre": nombre,
         "a": a,
@@ -162,26 +93,98 @@ def generate_document():
         "cuerpo": cuerpo
     }
 
-    # Ruta al template HTML (ajusta la ruta a donde se encuentre tu archivo)
+    # Generar el HTML del informe usando el template
     ruta_template = r"plantillas/informe_practicas.html"
+    ruta_css = r"plantillas/style.css"
+    nombre_template = os.path.basename(ruta_template)
+    ruta_template_dir = os.path.dirname(ruta_template)
+    env = jinja2.Environment(loader=jinja2.FileSystemLoader(ruta_template_dir))
+    template = env.get_template(nombre_template)
+    contenido_generado = template.render(info)
+
+    # Se re-renderiza form.html pasando el HTML generado para edición
+    return render_template(
+        "form.html",
+        estructura=load_estructura(),
+        contenido_generado=contenido_generado
+    )
+
+@app.route("/convert_document", methods=["POST"])
+def convert_document():
+    # Obtener el contenido HTML enviado vía formulario (POST)
+    contenido_html = request.form.get("contenido_html")
+    if not contenido_html:
+        return "No se recibió contenido", 400
+
+    # Definir las opciones de configuración para la generación del PDF
+    options = {
+        'page-size': 'A4',
+        'margin-top': '1in',
+        'margin-right': '1in',
+        'margin-bottom': '1in',
+        'margin-left': '1in',
+        'encoding': 'UTF-8'
+    }
+
+    # Crear un timestamp para nombrar de forma única los archivos de salida
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    # Definir las rutas de salida para el PDF y el documento Word
+    ruta_pdf_salida = f'salidas/salida_{timestamp}.pdf'
+    ruta_word_salida = f'salidas/salida_{timestamp}.docx'
+
+    # Ruta del archivo CSS para estilizar el PDF y configuración de wkhtmltopdf
+    ruta_css = r"plantillas/style.css"
+    config = pdfkit.configuration(wkhtmltopdf='C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe')
+    
+    # Generar el PDF a partir del contenido HTML proporcionado
+    pdfkit.from_string(contenido_html, ruta_pdf_salida, css=ruta_css, options=options, configuration=config)
+
+    # Crear la ruta para un archivo HTML temporal que servirá para generar el DOCX
+    temp_html_path = f'salidas/temp_{timestamp}.html'
+    
+    # Leer el estilo específico para Word desde un archivo de plantilla
+    with open("plantillas/style_word.txt", "r", encoding="utf-8") as f:
+        estilo = f.read()
+
+    # Combinar el estilo con el contenido HTML y agregar las etiquetas de cierre de HTML
+    contenido_html = estilo + contenido_html + "\n </body>\n</html>"
+
+    # Escribir el contenido HTML modificado en el archivo temporal
+    with open(temp_html_path, 'w', encoding='utf-8') as f:
+        f.write(contenido_html)
 
     try:
-        ruta_pdf, ruta_word = crea_pdf_y_word(ruta_template, info)
-        
-        # Extraer solo los nombres de archivo de las rutas completas
-        pdf_filename = os.path.basename(ruta_pdf)
-        word_filename = os.path.basename(ruta_word)
-        
-        # Re-renderizar form.html con la vista previa y enlaces de descarga
-        return render_template(
-            "form.html",
-            estructura=load_estructura(),
-            preview_pdf=pdf_filename,
-            pdf_download_url=url_for('download', tipo='pdf', filename=pdf_filename),
-            word_download_url=url_for('download', tipo='word', filename=word_filename)
-        )
-    except Exception as e:
-        return f"Error al crear PDF/Word: {str(e)}", 500
+        # Crear el documento de Word usando Spire.Doc
+        document = Document()
+        # Cargar el contenido del archivo HTML temporal en el documento
+        document.LoadFromFile(temp_html_path, FileFormat.Html)
+        # Guardar el documento en formato DOCX
+        document.SaveToFile(ruta_word_salida, FileFormat.Docx2016)
+        # Cerrar el documento y liberar recursos
+        document.Close()
+        document.Dispose()
+    finally:
+        # Eliminar el archivo HTML temporal para limpiar recursos
+        try:
+            if os.path.exists(temp_html_path):
+                os.remove(temp_html_path)
+        except:
+            pass
+
+    # Obtener solo el nombre de los archivos para facilitar su descarga
+    pdf_filename = os.path.basename(ruta_pdf_salida)
+    word_filename = os.path.basename(ruta_word_salida)
+
+    # Renderizar la plantilla "form.html" pasando la estructura y las URLs de descarga/previsualización
+    return render_template(
+        "form.html",
+        estructura=load_estructura(),
+        preview_pdf=pdf_filename,
+        pdf_download_url=url_for('download', tipo='pdf', filename=pdf_filename),
+        word_download_url=url_for('download', tipo='word', filename=word_filename)
+    )
+
+
 
 @app.route("/download/<tipo>/<filename>")
 def download(tipo, filename):

@@ -47,7 +47,6 @@
             border: 1px solid #ccc;
         }
 
-        /* Contenedor para disposición horizontal de bloques */
         .horizontal-container {
             display: flex;
             gap: 20px;
@@ -60,7 +59,6 @@
             min-width: 300px;
         }
 
-        /* Estilos para los botones de descarga */
         .download-buttons {
             margin-top: 20px;
             text-align: center;
@@ -80,6 +78,8 @@
             background-color: #FF9800;
         }
     </style>
+    <!-- Cargar CKEditor 4 desde la carpeta local (ajusta la ruta si es necesario) -->
+    <script src="{{ url_for('static', filename='ckeditor/ckeditor.js') }}"></script>
 </head>
 
 <body>
@@ -179,12 +179,35 @@
         <button type="submit">Generar Informe</button>
     </form>
 
-    <!-- Vista previa y botones de descarga, se muestran solo si se generó el documento -->
+    <!-- Sección para mostrar el editor WYSIWYG si se ha generado el informe -->
+    {% if contenido_generado %}
+    <hr>
+    <h2>Editor del Informe</h2>
+    <form action="{{ url_for('convert_document') }}" method="POST">
+        <textarea id="editor" name="contenido_html">{{ contenido_generado|safe }}</textarea>
+        <br>
+        <button type="submit">Guardar y Convertir a PDF/Word</button>
+    </form>
+    <script>
+        // Inicializa CKEditor con la configuración que desees (ajusta height/width según tus necesidades)
+        CKEDITOR.replace('editor', {
+            height: '800px',
+            width: '100%'
+        });
+
+        editorInstance.on('instanceReady', function () {
+            // Obtenemos el contenedor del editor (elemento DOM real)
+            var container = editorInstance.container.$;
+            container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    </script>
+    {% endif %}
+
+    <!-- Si se han generado archivos, se muestran enlaces o vista previa -->
     {% if preview_pdf %}
     <hr>
     <div id="preview">
-        <h2>Vista Previa del Informe</h2>
-        <!-- Incrustamos el PDF generado en un iframe -->
+        <h2>Vista Previa del Informe (PDF)</h2>
         <iframe src="{{ url_for('download', tipo='pdf', filename=preview_pdf) }}?preview=1" width="100%" height="500px"
             style="border: 1px solid #ccc;"></iframe>
         <div class="download-buttons">
@@ -195,7 +218,7 @@
     {% endif %}
 
     <script>
-        // La estructura se pasa desde el backend
+        // Variables y scripts para la manipulación de los selectores de Gerencias, Áreas, Trabajadores y fechas.
         var estructura = {{ estructura | tojson }};
 
         // BLOQUE "A:"
@@ -284,7 +307,7 @@
             campoAtencion.value = trabajadorAtencion.value;
         });
 
-        // Funciones para el manejo de fechas
+        // Funciones para manejo de fechas
         const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
         function formatearFecha(fecha) {
             const dia = fecha.getDate();
@@ -302,13 +325,11 @@
             const valorFecha = document.getElementById('fechaManualSelector').value;
             if (valorFecha) {
                 const partes = valorFecha.split("-");
-                // Se crea la fecha en la zona horaria local: new Date(año, mes-1, día)
                 const fechaSeleccionada = new Date(partes[0], partes[1] - 1, partes[2]);
                 const fechaFormateada = formatearFecha(fechaSeleccionada);
                 document.getElementById('fechaManualInput').value = fechaFormateada;
             }
         }
-
         function toggleFechaManual() {
             const tipoFecha = document.getElementById('tipoFecha').value;
             if (tipoFecha === 'auto') {

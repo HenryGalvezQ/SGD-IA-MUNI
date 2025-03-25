@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        /* Definir la tipografía Calibri */
+        body {
+            font-family: 'Calibri', sans-serif;
+            line-height: 1.5;
+            /* Interlineado 1.5 */
+            font-size: 12pt;
+            /* Tamaño de fuente como en Word */
+        }
+    </style>
+</head>
+
+<body>

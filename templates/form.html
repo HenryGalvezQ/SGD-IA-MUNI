@@ -26,6 +26,12 @@
             cursor: pointer;
         }
 
+        button:disabled {
+            background-color: #cccccc;
+            color: #666666;
+            cursor: not-allowed;
+        }
+
         input,
         textarea,
         select {
@@ -77,151 +83,361 @@
         .download-button.word {
             background-color: #FF9800;
         }
+
+        #editor-section,
+        #preview-section {
+            margin-top: 20px;
+            border: 1px solid #eee;
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .button-container button#generate-button {
+            /* No specific styling needed here */
+        }
+
+        .navigation-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .required-field {
+            border: 1px solid red !important;
+        }
+
+        .error-message {
+            color: red;
+            font-size: 0.8em;
+            margin-top: 2px;
+        }
     </style>
-    <!-- Cargar CKEditor 4 desde la carpeta local (ajusta la ruta si es necesario) -->
     <script src="{{ url_for('static', filename='ckeditor/ckeditor.js') }}"></script>
 </head>
 
 <body>
     <h1>Generar Informe de Prácticas</h1>
-    <h2>Datos de la Cabecera</h2>
-    <form method="POST" action="{{ url_for('generate_document') }}">
-        <!-- Campo DE: -->
-        <label for="nombre">DE:</label>
-        <input type="text" id="nombre" name="nombre" placeholder="Nombre de quien emite el informe" required>
 
-        <!-- Contenedor horizontal para los bloques "A:" y "ATENCIÓN:" -->
-        <div class="horizontal-container">
-            <!-- Bloque para "A:" -->
+    <div id="form-section">
+        <h2>Datos de la Cabecera</h2>
+        <form id="generate-form">
+            <label for="nombre">DE:</label>
+            <input type="text" id="nombre" name="nombre" placeholder="Nombre de quien emite el informe" required>
+            <div class="error-message" id="nombre-error"></div>
+
+            <div class="horizontal-container">
+                <div class="section">
+                    <h3>Datos para "A:"</h3>
+                    <label>Seleccione la Gerencia para A:</label>
+                    <select id="gerencia_a" required>
+                        <option value="">Seleccione una gerencia</option>
+                        {% for gerencia in estructura.Gerencias.keys() %}
+                        <option value="{{ gerencia }}">{{ gerencia }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="error-message" id="gerencia_a-error"></div>
+
+                    <label>Seleccione el Área (Oficina) para A:</label>
+                    <select id="area_a" required>
+                        <option value="">Seleccione un área</option>
+                    </select>
+                    <div class="error-message" id="area_a-error"></div>
+
+                    <label>Seleccione el Trabajador para A:</label>
+                    <select id="trabajador_a" required>
+                        <option value="">Seleccione un trabajador</option>
+                    </select>
+                    <div class="error-message" id="trabajador_a-error"></div>
+
+                    <input type="hidden" id="oficina_a" name="oficina_a">
+                    <input type="hidden" id="a" name="a">
+                </div>
+
+                <div class="section">
+                    <h3>Datos para "ATENCIÓN:"</h3>
+                    <label>Seleccione la Gerencia para ATENCIÓN:</label>
+                    <select id="gerencia_atencion" required>
+                        <option value="">Seleccione una gerencia</option>
+                        {% for gerencia in estructura.Gerencias.keys() %}
+                        <option value="{{ gerencia }}">{{ gerencia }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="error-message" id="gerencia_atencion-error"></div>
+
+                    <label>Seleccione el Área (Subgerencia) para ATENCIÓN:</label>
+                    <select id="area_atencion" required>
+                        <option value="">Seleccione un área</option>
+                    </select>
+                    <div class="error-message" id="area_atencion-error"></div>
+
+                    <label>Seleccione el Trabajador para ATENCIÓN:</label>
+                    <select id="trabajador_atencion" required>
+                        <option value="">Seleccione un trabajador</option>
+                    </select>
+                    <div class="error-message" id="trabajador_atencion-error"></div>
+
+                    <input type="hidden" id="subgerencia_atencion" name="subgerencia_atencion">
+                    <input type="hidden" id="atencion" name="atencion">
+                </div>
+            </div>
+
+            <label for="asunto">Nombre (para el informe):</label>
+            <input type="text" name="asunto" id="asunto" value="INFORME DE PRÁCTICAS DEL MES" readonly required>
+            <div class="error-message" id="asunto-error"></div>
+
             <div class="section">
-                <h3>Datos para "A:"</h3>
-                <label>Seleccione la Gerencia para A:</label>
-                <select id="gerencia_a" required>
-                    <option value="">Seleccione una gerencia</option>
-                    {% for gerencia in estructura.Gerencias.keys() %}
-                    <option value="{{ gerencia }}">{{ gerencia }}</option>
-                    {% endfor %}
-                </select>
-
-                <label>Seleccione el Área (Oficina) para A:</label>
-                <select id="area_a" required>
-                    <option value="">Seleccione un área</option>
-                </select>
-
-                <label>Seleccione el Trabajador para A:</label>
-                <select id="trabajador_a" required>
-                    <option value="">Seleccione un trabajador</option>
-                </select>
-
-                <!-- Campos ocultos para enviar los valores seleccionados -->
-                <input type="hidden" id="oficina_a" name="oficina_a">
-                <input type="hidden" id="a" name="a">
+                <div>
+                    <label>Tipo de fecha:</label>
+                    <select id="tipoFecha" onchange="toggleFechaManual()">
+                        <option value="auto">Fecha automática (hoy)</option>
+                        <option value="manual">Fecha manual</option>
+                    </select>
+                </div>
+                <div id="fechaAutoDiv">
+                    <p>Se usará la fecha actual formateada como: <span id="fechaFormateadaAuto"></span></p>
+                    <input type="hidden" name="fecha" id="fechaAutoInput">
+                </div>
+                <div id="fechaManualDiv" class="hidden">
+                    <label for="fechaManualSelector">Seleccionar fecha:</label>
+                    <input type="date" id="fechaManualSelector" onchange="actualizarFechaManual()"><br><br>
+                    <label for="fechaManualInput">Fecha formateada:</label>
+                    <input type="text" name="fecha" id="fechaManualInput" placeholder="La Joya, DD de Mes de AAAA"
+                        required>
+                    <div class="error-message" id="fechaManualInput-error"></div>
+                </div>
             </div>
 
-            <!-- Bloque para "ATENCIÓN:" -->
             <div class="section">
-                <h3>Datos para "ATENCIÓN:"</h3>
-                <label>Seleccione la Gerencia para ATENCIÓN:</label>
-                <select id="gerencia_atencion" required>
-                    <option value="">Seleccione una gerencia</option>
-                    {% for gerencia in estructura.Gerencias.keys() %}
-                    <option value="{{ gerencia }}">{{ gerencia }}</option>
-                    {% endfor %}
-                </select>
-
-                <label>Seleccione el Área (Subgerencia) para ATENCIÓN:</label>
-                <select id="area_atencion" required>
-                    <option value="">Seleccione un área</option>
-                </select>
-
-                <label>Seleccione el Trabajador para ATENCIÓN:</label>
-                <select id="trabajador_atencion" required>
-                    <option value="">Seleccione un trabajador</option>
-                </select>
-
-                <!-- Campos ocultos para enviar los valores seleccionados -->
-                <input type="hidden" id="subgerencia_atencion" name="subgerencia_atencion">
-                <input type="hidden" id="atencion" name="atencion">
+                <label for="instrucciones">Instrucciones para el informe:</label>
+                <textarea name="instrucciones" id="instrucciones" rows="4" cols="50"
+                    placeholder="Escribe aquí detalles o indicaciones para el informe"></textarea>
             </div>
-        </div>
 
-        <!-- Campo para el nombre (para el informe) -->
-        <label for="asunto">Nombre (para el informe):</label>
-        <input type="text" name="asunto" id="asunto" value="INFORME DE PRÁCTICAS DEL MES" readonly required>
-
-        <!-- Campos de fecha (opción automática o manual) -->
-        <div class="section">
-            <div>
-                <label>Tipo de fecha:</label>
-                <select id="tipoFecha" onchange="toggleFechaManual()">
-                    <option value="auto">Fecha automática (hoy)</option>
-                    <option value="manual">Fecha manual</option>
-                </select>
+            <div class="button-container">
+                <button type="submit" id="generate-button">Generar Informe</button>
+                <div id="navigation-buttons" class="navigation-buttons">
+                    <button id="back-button">Retroceder</button>
+                    <button id="forward-button">Siguiente</button>
+                </div>
             </div>
-            <div id="fechaAutoDiv">
-                <p>Se usará la fecha actual formateada como: <span id="fechaFormateadaAuto"></span></p>
-                <input type="hidden" name="fecha" id="fechaAutoInput">
-            </div>
-            <div id="fechaManualDiv" class="hidden">
-                <label for="fechaManualSelector">Seleccionar fecha:</label>
-                <input type="date" id="fechaManualSelector" onchange="actualizarFechaManual()"><br><br>
-                <label for="fechaManualInput">Fecha formateada:</label>
-                <input type="text" name="fecha" id="fechaManualInput" placeholder="La Joya, DD de Mes de YYYY">
-            </div>
-        </div>
+        </form>
+    </div>
 
-        <div class="section">
-            <label for="instrucciones">Instrucciones para el informe:</label>
-            <textarea name="instrucciones" id="instrucciones" rows="4" cols="50"
-                placeholder="Escribe aquí detalles o indicaciones para el informe"></textarea>
-        </div>
+    <div id="editor-section" class="hidden">
+        <h2>Editor del Informe</h2>
+        <form id="convert-form">
+            <textarea id="editor" name="contenido_html"></textarea>
+            <br>
+            <button type="submit">Guardar y Convertir a PDF/Word</button>
+        </form>
+    </div>
 
-        <button type="submit">Generar Informe</button>
-    </form>
-
-    <!-- Sección para mostrar el editor WYSIWYG si se ha generado el informe -->
-    {% if contenido_generado %}
-    <hr>
-    <h2>Editor del Informe</h2>
-    <form action="{{ url_for('convert_document') }}" method="POST">
-        <textarea id="editor" name="contenido_html">{{ contenido_generado|safe }}</textarea>
-        <br>
-        <button type="submit">Guardar y Convertir a PDF/Word</button>
-    </form>
-    <script>
-        // Inicializa CKEditor con la configuración que desees (ajusta height/width según tus necesidades)
-        CKEDITOR.replace('editor', {
-            height: '800px',
-            width: '100%'
-        });
-
-        editorInstance.on('instanceReady', function () {
-            // Obtenemos el contenedor del editor (elemento DOM real)
-            var container = editorInstance.container.$;
-            container.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        });
-    </script>
-    {% endif %}
-
-    <!-- Si se han generado archivos, se muestran enlaces o vista previa -->
-    {% if preview_pdf %}
-    <hr>
-    <div id="preview">
+    <div id="preview-section" class="hidden">
         <h2>Vista Previa del Informe (PDF)</h2>
-        <iframe src="{{ url_for('download', tipo='pdf', filename=preview_pdf) }}?preview=1" width="100%" height="500px"
-            style="border: 1px solid #ccc;"></iframe>
+        <iframe id="pdf-preview" width="100%" height="500px" style="border: 1px solid #ccc;"></iframe>
         <div class="download-buttons">
-            <a href="{{ pdf_download_url }}" class="download-button">Descargar PDF</a>
-            <a href="{{ word_download_url }}" class="download-button word">Descargar Word</a>
+            <a id="pdf-download-link" href="#" class="download-button">Descargar PDF</a>
+            <a id="word-download-link" href="#" class="download-button word">Descargar Word</a>
         </div>
     </div>
-    {% endif %}
 
     <script>
-        // Variables y scripts para la manipulación de los selectores de Gerencias, Áreas, Trabajadores y fechas.
         var estructura = {{ estructura | tojson }};
+        var current_state = 'form';
+        var history_stack = ['form'];
+        var history_index = 0;
+        var form_data = {};
+        var generated_html = '';
+        var pdf_url = '';
+        var word_url = '';
+        var editorInstance;
 
-        // BLOQUE "A:"
+        // Function to update the UI based on the current state
+        function updateUI() {
+            // Keep the form section always visible
+            document.getElementById('form-section').style.display = 'block';
+            document.getElementById('editor-section').style.display = current_state === 'editor' ? 'block' : 'none';
+            document.getElementById('preview-section').style.display = current_state === 'preview' ? 'block' : 'none';
+            const navigationButtonsDiv = document.getElementById('navigation-buttons');
+            if (navigationButtonsDiv) {
+                navigationButtonsDiv.style.display = current_state !== 'form' ? 'flex' : 'none';
+            }
+
+            // Update navigation button states
+            const backButton = document.getElementById('back-button');
+            const forwardButton = document.getElementById('forward-button');
+            if (backButton) backButton.disabled = history_index === 0;
+            if (forwardButton) forwardButton.disabled = history_index === history_stack.length - 1;
+
+            if (current_state === 'editor' && !editorInstance) {
+                CKEDITOR.replace('editor', {
+                    height: '800px',
+                    width: '100%'
+                });
+                CKEDITOR.on('instanceReady', function (evt) {
+                    editorInstance = evt.editor;
+                    editorInstance.setData(generated_html);
+                });
+            } else if (current_state === 'editor' && editorInstance) {
+                editorInstance.setData(generated_html);
+            } else if (current_state === 'preview') {
+                document.getElementById('pdf-preview').src = pdf_url + '?preview=1';
+                document.getElementById('pdf-download-link').href = pdf_url;
+                document.getElementById('word-download-link').href = word_url;
+            }
+        }
+
+        // Function to validate the form
+        function validateForm() {
+            let isValid = true;
+            const requiredFields = document.querySelectorAll('#generate-form [required]');
+
+            requiredFields.forEach(field => {
+                const errorDivId = field.id + '-error';
+                const errorDiv = document.getElementById(errorDivId);
+
+                if (field.tagName === 'SELECT' && field.value === '') {
+                    field.classList.add('required-field');
+                    if (errorDiv) errorDiv.textContent = 'Por favor, seleccione una opción.';
+                    isValid = false;
+                } else if (field.tagName === 'INPUT' && field.type === 'text' && field.value.trim() === '') {
+                    field.classList.add('required-field');
+                    if (errorDiv) errorDiv.textContent = 'Este campo es requerido.';
+                    isValid = false;
+                } else if (field.tagName === 'INPUT' && field.type === 'date' && field.value === '') {
+                    field.classList.add('required-field');
+                    const manualInputErrorDiv = document.getElementById('fechaManualInput-error');
+                    if (manualInputErrorDiv && !document.getElementById('fechaAutoDiv').classList.contains('hidden')) {
+                        manualInputErrorDiv.textContent = ''; // Clear if auto date is selected
+                        field.classList.remove('required-field');
+                    } else if (manualInputErrorDiv) {
+                        manualInputErrorDiv.textContent = 'Por favor, seleccione una fecha.';
+                        isValid = false;
+                    }
+                } else if (field.tagName === 'INPUT' && field.type === 'hidden' && field.id === 'fechaAutoInput' && field.value === '') {
+                    // This case should ideally not happen if auto date works, but for safety
+                    const manualInputErrorDiv = document.getElementById('fechaManualInput-error');
+                    if (manualInputErrorDiv && document.getElementById('fechaAutoDiv').classList.contains('hidden')) {
+                        // If manual is hidden but auto is empty, something is wrong
+                        if (document.getElementById('fechaManualInput').value === '') {
+                            document.getElementById('fechaManualInput').classList.add('required-field');
+                            manualInputErrorDiv.textContent = 'Por favor, seleccione una fecha.';
+                            isValid = false;
+                        } else {
+                            document.getElementById('fechaManualInput').classList.remove('required-field');
+                            manualInputErrorDiv.textContent = '';
+                        }
+                    }
+                } else {
+                    field.classList.remove('required-field');
+                    if (errorDiv) errorDiv.textContent = '';
+                }
+            });
+
+            // Special handling for the combined date field
+            const fechaManualInput = document.getElementById('fechaManualInput');
+            const fechaManualSelector = document.getElementById('fechaManualSelector');
+            const fechaAutoDiv = document.getElementById('fechaAutoDiv');
+            const fechaManualDiv = document.getElementById('fechaManualDiv');
+            const fechaManualInputErrorDiv = document.getElementById('fechaManualInput-error');
+
+            if (fechaManualDiv && !fechaManualDiv.classList.contains('hidden') && fechaManualInput.value.trim() === '') {
+                fechaManualInput.classList.add('required-field');
+                if (fechaManualInputErrorDiv) fechaManualInputErrorDiv.textContent = 'Por favor, seleccione una fecha.';
+                isValid = false;
+            } else if (fechaManualDiv && !fechaManualDiv.classList.contains('hidden')) {
+                fechaManualInput.classList.remove('required-field');
+                if (fechaManualInputErrorDiv) fechaManualInputErrorDiv.textContent = '';
+            }
+
+            return isValid;
+        }
+
+        // Event listener for the initial form submission
+        document.getElementById('generate-form').addEventListener('submit', function (event) {
+            event.preventDefault();
+            if (validateForm()) {
+                var formData = new FormData(this);
+
+                fetch('/generate', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            alert('Error: ' + data.error);
+                        } else {
+                            form_data = data.form_data;
+                            generated_html = data.contenido_generado;
+                            current_state = 'editor';
+                            history_stack.push(current_state);
+                            history_index++;
+                            updateUI();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Ocurrió un error al generar el informe.');
+                    });
+            }
+        });
+
+        // Event listener for the CKEditor form submission
+        document.getElementById('convert-form').addEventListener('submit', function (event) {
+            event.preventDefault();
+            var formData = new FormData();
+            formData.append('contenido_html', CKEDITOR.instances.editor.getData());
+
+            fetch('/convert_document', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert('Error: ' + data.error);
+                    } else {
+                        pdf_url = data.pdf_download_url;
+                        word_url = data.word_download_url;
+                        current_state = 'preview';
+                        history_stack.push(current_state);
+                        history_index++;
+                        updateUI();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Ocurrió un error al convertir el documento.');
+                });
+        });
+
+        // Event listener for the back button
+        document.getElementById('back-button').addEventListener('click', function () {
+            if (history_index > 0) {
+                history_index--;
+                current_state = history_stack[history_index];
+                updateUI();
+            }
+        });
+
+        // Event listener for the forward button
+        document.getElementById('forward-button').addEventListener('click', function () {
+            if (history_index < history_stack.length - 1) {
+                history_index++;
+                current_state = history_stack[history_index];
+                updateUI();
+            }
+        });
+
+        // Variables y scripts para la manipulación de los selectores de Gerencias, Áreas, Trabajadores y fechas.
+        // (Keep the existing JavaScript for dropdowns and date handling)
         var gerenciaA = document.getElementById('gerencia_a');
         var areaA = document.getElementById('area_a');
         var trabajadorA = document.getElementById('trabajador_a');
@@ -241,6 +457,10 @@
                     areaA.appendChild(option);
                 });
             }
+            // Clear errors when the user interacts
+            this.classList.remove('required-field');
+            const errorDiv = document.getElementById(this.id + '-error');
+            if (errorDiv) errorDiv.textContent = '';
         });
 
         areaA.addEventListener('change', function () {
@@ -258,10 +478,16 @@
                 });
             }
             campoOficinaA.value = area;
+            this.classList.remove('required-field');
+            const errorDiv = document.getElementById(this.id + '-error');
+            if (errorDiv) errorDiv.textContent = '';
         });
 
         trabajadorA.addEventListener('change', function () {
             campoA.value = trabajadorA.value;
+            this.classList.remove('required-field');
+            const errorDiv = document.getElementById(this.id + '-error');
+            if (errorDiv) errorDiv.textContent = '';
         });
 
         // BLOQUE "ATENCIÓN:"
@@ -284,6 +510,9 @@
                     areaAtencion.appendChild(option);
                 });
             }
+            this.classList.remove('required-field');
+            const errorDiv = document.getElementById(this.id + '-error');
+            if (errorDiv) errorDiv.textContent = '';
         });
 
         areaAtencion.addEventListener('change', function () {
@@ -301,10 +530,16 @@
                 });
             }
             campoSubgerenciaAtencion.value = area;
+            this.classList.remove('required-field');
+            const errorDiv = document.getElementById(this.id + '-error');
+            if (errorDiv) errorDiv.textContent = '';
         });
 
         trabajadorAtencion.addEventListener('change', function () {
             campoAtencion.value = trabajadorAtencion.value;
+            this.classList.remove('required-field');
+            const errorDiv = document.getElementById(this.id + '-error');
+            if (errorDiv) errorDiv.textContent = '';
         });
 
         // Funciones para manejo de fechas
@@ -329,6 +564,10 @@
                 const fechaFormateada = formatearFecha(fechaSeleccionada);
                 document.getElementById('fechaManualInput').value = fechaFormateada;
             }
+            const manualInput = document.getElementById('fechaManualInput');
+            manualInput.classList.remove('required-field');
+            const errorDiv = document.getElementById(manualInput.id + '-error');
+            if (errorDiv) errorDiv.textContent = '';
         }
         function toggleFechaManual() {
             const tipoFecha = document.getElementById('tipoFecha').value;
@@ -337,19 +576,27 @@
                 document.getElementById('fechaManualDiv').classList.add('hidden');
                 document.getElementById('fechaManualInput').name = '';
                 document.getElementById('fechaAutoInput').name = 'fecha';
+                // Clear error if switching to auto
+                const manualInput = document.getElementById('fechaManualInput');
+                manualInput.classList.remove('required-field');
+                const errorDiv = document.getElementById(manualInput.id + '-error');
+                if (errorDiv) errorDiv.textContent = '';
             } else {
                 document.getElementById('fechaAutoDiv').classList.add('hidden');
                 document.getElementById('fechaManualDiv').classList.remove('hidden');
                 document.getElementById('fechaManualInput').name = 'fecha';
                 document.getElementById('fechaAutoInput').name = '';
+                // Trigger manual date update to format and potentially validate
+                actualizarFechaManual();
             }
         }
         window.onload = function () {
             actualizarFechaAuto();
             const hoy = new Date();
-            const yyyyMMdd = hoy.toISOString().split('T')[0];
-            document.getElementById('fechaManualSelector').value = yyyyMMdd;
+            const formattedDate = hoy.toISOString().split('T')[0];
+            document.getElementById('fechaManualSelector').value = formattedDate;
             actualizarFechaManual();
+            updateUI(); // Initialize the UI
         };
     </script>
 </body>

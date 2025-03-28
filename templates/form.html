@@ -257,7 +257,6 @@
         var pdf_url = '';
         var word_url = '';
         var editorInstance;
-        var ckeditorData = {}; // To store CKEditor content
 
         // Function to update the UI based on the current state
         function updateUI() {
@@ -268,7 +267,7 @@
 
             const navigationButtonsDiv = document.getElementById('navigation-buttons');
             if (navigationButtonsDiv) {
-                navigationButtonsDiv.style.display = 'flex';
+                navigationButtonsDiv.style.display = 'flex'; // Always display the navigation buttons
             }
 
             // Update navigation button states
@@ -277,29 +276,17 @@
             if (backButton) backButton.disabled = history_index === 0;
             if (forwardButton) forwardButton.disabled = history_index === history_stack.length - 1;
 
-            if (current_state === 'editor') {
-                if (!editorInstance) {
-                    CKEDITOR.replace('editor', {
-                        height: '800px',
-                        width: '100%'
-                    });
-                    CKEDITOR.on('instanceReady', function (evt) {
-                        editorInstance = evt.editor;
-                        // Load saved data if available
-                        if (ckeditorData['editor']) {
-                            editorInstance.setData(ckeditorData['editor']);
-                        } else {
-                            editorInstance.setData(generated_html);
-                        }
-                    });
-                } else if (editorInstance) {
-                    // Load saved data if available when switching back
-                    if (ckeditorData['editor']) {
-                        editorInstance.setData(ckeditorData['editor']);
-                    } else {
-                        editorInstance.setData(generated_html);
-                    }
-                }
+            if (current_state === 'editor' && !editorInstance) {
+                CKEDITOR.replace('editor', {
+                    height: '800px',
+                    width: '100%'
+                });
+                CKEDITOR.on('instanceReady', function (evt) {
+                    editorInstance = evt.editor;
+                    editorInstance.setData(generated_html);
+                });
+            } else if (current_state === 'editor' && editorInstance) {
+                editorInstance.setData(generated_html);
             } else if (current_state === 'preview') {
                 document.getElementById('pdf-preview').src = pdf_url + '?preview=1';
                 document.getElementById('pdf-download-link').href = pdf_url;
@@ -406,12 +393,8 @@
         // Event listener for the CKEditor form submission
         document.getElementById('convert-form').addEventListener('submit', function (event) {
             event.preventDefault();
-            // Save CKEditor content before moving to preview
-            if (editorInstance) {
-                ckeditorData['editor'] = editorInstance.getData();
-            }
             var formData = new FormData();
-            formData.append('contenido_html', ckeditorData['editor'] || generated_html);
+            formData.append('contenido_html', CKEDITOR.instances.editor.getData());
 
             fetch('/convert_document', {
                 method: 'POST',
@@ -439,10 +422,6 @@
         // Event listener for the back button
         document.getElementById('back-button').addEventListener('click', function () {
             if (history_index > 0) {
-                // Save CKEditor content when leaving the editor state
-                if (current_state === 'editor' && editorInstance) {
-                    ckeditorData['editor'] = editorInstance.getData();
-                }
                 history_index--;
                 current_state = history_stack[history_index];
                 updateUI();

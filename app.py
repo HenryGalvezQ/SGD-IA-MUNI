@@ -38,6 +38,7 @@ def limpiar_respuesta(respuesta):
 def index():
     # Mostrar el formulario para ingresar nombre, fecha e instrucciones para el informe
     return render_template("form.html", estructura=load_estructura())
+    return render_template("form.html", estructura=load_estructura())
 
 @app.route("/generate", methods=["POST"])
 def generate_document():
@@ -68,6 +69,7 @@ def generate_document():
     prompt = (
         reglas + "\n" +
         f"Genera el cuerpo del informe de prácticas para un estudiante llamado {nombre} con fecha {fecha} con html " +
+        f"Genera el cuerpo del informe de prácticas para un estudiante llamado {nombre} con fecha {fecha} con html " +
         (instrucciones_usuario if instrucciones_usuario else "") + "\n" +
         formato
     )
@@ -93,6 +95,7 @@ def generate_document():
         "cuerpo": cuerpo
     }
 
+    # Generar el HTML del informe usando el template
     # Generar el HTML del informe usando el template
     ruta_template = r"plantillas/informe_practicas.html"
     ruta_css = r"plantillas/style.css"

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Generar Informe de Prácticas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='templates/styles.css') }}">
+</head>
+
+<body>
+    <h1>Generar Informe de Prácticas</h1>
+
+    <div id="form-section">
+        <h2>Datos de la Cabecera</h2>
+        <form id="generate-form">
+            <label for="nombre">DE:</label>
+            <input type="text" id="nombre" name="nombre" placeholder="Nombre de quien emite el informe">
+            <div class="error-message" id="nombre-error"></div>
+
+            <div class="horizontal-container">
+                <div class="section">
+                    <div>
+                        <label>Seleccione la Gerencia para A:</label>
+                        <select id="gerencia_a">
+                            <option value="">Seleccione una gerencia</option>
+                            {% for gerencia in estructura.Gerencias.keys() %}
+                            <option value="{{ gerencia }}">{{ gerencia }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="error-message" id="gerencia_a-error"></div>
+                    </div>
+                    <div>
+                        <label>Seleccione el Área (Oficina) para A:</label>
+                        <select id="area_a">
+                            <option value="">Seleccione un área</option>
+                        </select>
+                        <div class="error-message" id="area_a-error"></div>
+                    </div>
+                    <div>
+                        <label>Seleccione el Trabajador para A:</label>
+                        <select id="trabajador_a">
+                            <option value="">Seleccione un trabajador</option>
+                        </select>
+                        <div class="error-message" id="trabajador_a-error"></div>
+                    </div>
+                    <input type="hidden" id="oficina_a" name="oficina_a">
+                    <input type="hidden" id="a" name="a">
+                </div>
+
+                <div class="section">
+                    <div>
+                        <label>Seleccione la Gerencia para ATENCIÓN:</label>
+                        <select id="gerencia_atencion">
+                            <option value="">Seleccione una gerencia</option>
+                            {% for gerencia in estructura.Gerencias.keys() %}
+                            <option value="{{ gerencia }}">{{ gerencia }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="error-message" id="gerencia_atencion-error"></div>
+                    </div>
+                    <div>
+                        <label>Seleccione el Área (Subgerencia) para ATENCIÓN:</label>
+                        <select id="area_atencion">
+                            <option value="">Seleccione un área</option>
+                        </select>
+                        <div class="error-message" id="area_atencion-error"></div>
+                    </div>
+                    <div>
+                        <label>Seleccione el Trabajador para ATENCIÓN:</label>
+                        <select id="trabajador_atencion">
+                            <option value="">Seleccione un trabajador</option>
+                        </select>
+                        <div class="error-message" id="trabajador_atencion-error"></div>
+                    </div>
+                    <input type="hidden" id="subgerencia_atencion" name="subgerencia_atencion">
+                    <input type="hidden" id="atencion" name="atencion">
+                </div>
+            </div>
+
+            <label for="asunto">Nombre (para el informe):</label>
+            <input type="text" name="asunto" id="asunto" value="INFORME DE PRÁCTICAS DEL MES" readonly>
+            <div class="error-message" id="asunto-error"></div>
+
+            <div class="section">
+                <div>
+                    <label>Tipo de fecha:</label>
+                    <select id="tipoFecha" onchange="toggleFechaManual()">
+                        <option value="auto">Fecha automática (hoy)</option>
+                        <option value="manual">Fecha manual</option>
+                    </select>
+                </div>
+                <div id="fechaAutoDiv">
+                    <p>Se usará la fecha actual formateada como: <span id="fechaFormateadaAuto"></span></p>
+                    <input type="hidden" name="fecha" id="fechaAutoInput">
+                </div>
+                <div id="fechaManualDiv" class="hidden">
+                    <label for="fechaManualSelector">Seleccionar fecha:</label>
+                    <input type="date" id="fechaManualSelector" onchange="actualizarFechaManual()"><br><br>
+                    <label for="fechaManualInput">Fecha formateada:</label>
+                    <input type="text" name="fecha" id="fechaManualInput" placeholder="La Joya, DD de Mes de AAAA">
+                    <div class="error-message" id="fechaManualInput-error"></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <label for="instrucciones">Instrucciones para el informe:</label>
+                <textarea name="instrucciones" id="instrucciones" rows="4" cols="50"
+                    placeholder="Escribe aquí detalles o indicaciones para el informe"></textarea>
+            </div>
+
+            <div class="button-container">
+                <button type="submit" id="generate-button">Generar Informe</button>
+                <div id="navigation-buttons" class="navigation-buttons">
+                    <button id="back-button">Retroceder</button>
+                    <button id="forward-button">Siguiente</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div id="editor-section" class="hidden">
+        <h2>Editor del Informe</h2>
+        <form id="convert-form">
+            <textarea id="editor" name="contenido_html"></textarea>
+            <br>
+            <button type="submit">Guardar y Convertir a PDF/Word</button>
+        </form>
+    </div>
+
+    <div id="preview-section" class="hidden">
+        <h2>Vista Previa del Informe (PDF)</h2>
+        <iframe id="pdf-preview" width="100%" height="500px" style="border: 1px solid #ccc;"></iframe>
+        <div class="download-buttons">
+            <a id="pdf-download-link" href="#" class="download-button">Descargar PDF</a>
+            <a id="word-download-link" href="#" class="download-button word">Descargar Word</a>
+        </div>
+    </div>
+    <script>
+        var estructura = {{ estructura | tojson }};
+    </script>
+    <script src="{{ url_for('static', filename='ckeditor/ckeditor.js') }}"></script>
+    <script src="{{ url_for('static', filename='templates/script.js') }}"></script>
+</body>
+
+</html>

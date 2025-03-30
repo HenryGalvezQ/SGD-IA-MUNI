@@ -1,0 +1,122 @@
+body {
+    font-family: Arial, sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.hidden {
+    display: none;
+}
+
+button,
+input[type="submit"] {
+    padding: 8px 16px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:disabled {
+    background-color: #cccccc;
+    color: #666666;
+    cursor: not-allowed;
+}
+
+input,
+textarea,
+select {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+    /* Reducimos un poco el margin-bottom general */
+}
+
+label {
+    font-weight: bold;
+    display: block;
+    /* Aseguramos que las etiquetas ocupen una línea completa */
+    margin-bottom: 4px;
+    /* Añadimos un pequeño margen debajo de las etiquetas */
+}
+
+.section {
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
+.horizontal-container {
+    display: flex;
+    gap: 20px;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.horizontal-container .section {
+    flex: 1;
+    min-width: 300px;
+}
+
+.horizontal-container .section>div {
+    /* Añadimos margen inferior a los divs dentro de las secciones horizontales */
+    margin-bottom: 10px;
+}
+
+.download-buttons {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.download-button {
+    display: inline-block;
+    padding: 10px 20px;
+    margin: 5px;
+    background-color: #2196F3;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+}
+
+.download-button.word {
+    background-color: #FF9800;
+}
+
+#editor-section,
+#preview-section {
+    margin-top: 20px;
+    border: 1px solid #eee;
+    padding: 15px;
+    border-radius: 5px;
+}
+
+.button-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+}
+
+.button-container button#generate-button {
+    /* No specific styling needed here */
+}
+
+.navigation-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.required-field {
+    border: 1px solid red !important;
+}
+
+.error-message {
+    color: red;
+    font-size: 0.8em;
+    margin-top: -3px;
+}

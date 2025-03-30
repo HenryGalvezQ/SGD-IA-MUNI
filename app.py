@@ -13,8 +13,11 @@ import re
 # Cargar variables de entorno desde el archivo .env
 load_dotenv()
 
-app = Flask(__name__)
+# Indicar a Flask dónde se encuentran las plantillas y los archivos estáticos.
+app = Flask(__name__, template_folder='static/templates')
 app.secret_key = 'tu_clave_secreta'
+
+
 
 # Configurar el cliente de OpenAI con la API key
 api_key = os.environ.get("OPENAI_API_KEY")
